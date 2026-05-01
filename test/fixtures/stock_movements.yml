@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  id: 
+  product: one
+  user: one
+  tipo_movimento: MyString
+  quantita: 1
+  note: MyText
+
+two:
+  id: 
+  product: two
+  user: two
+  tipo_movimento: MyString
+  quantita: 1
+  note: MyText

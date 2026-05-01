@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  id: 
+  corpo_messaggio: MyText
+  data_invio: 2026-04-28 16:44:26
+  esito_invio: MyString
+
+two:
+  id: 
+  corpo_messaggio: MyText
+  data_invio: 2026-04-28 16:44:26
+  esito_invio: MyString

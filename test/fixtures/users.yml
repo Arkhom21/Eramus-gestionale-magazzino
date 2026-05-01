@@ -1,0 +1,27 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  id: 
+  username: MyString
+  email: MyString
+  password_digest: MyString
+  nome: MyString
+  cognome: MyString
+  data_nascita: 2026-04-28
+  tentativi_login_falliti: 1
+  stato_account: MyString
+  ultimo_login: 2026-04-28 15:36:29
+  role: one
+
+two:
+  id: 
+  username: MyString
+  email: MyString
+  password_digest: MyString
+  nome: MyString
+  cognome: MyString
+  data_nascita: 2026-04-28
+  tentativi_login_falliti: 1
+  stato_account: MyString
+  ultimo_login: 2026-04-28 15:36:29
+  role: two

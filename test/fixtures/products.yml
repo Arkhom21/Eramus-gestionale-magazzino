@@ -1,0 +1,25 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  id: 
+  nome_oggetto: MyString
+  descrizione: MyText
+  quantita_disponibile: 1
+  prezzo_unitario: 9.99
+  soglia_minima_magazzino: 1
+  data_inserimento: 2026-04-28 17:19:33
+  product_type: one
+  user: one
+  data_ultima_modifica: 2026-04-28 17:19:33
+
+two:
+  id: 
+  nome_oggetto: MyString
+  descrizione: MyText
+  quantita_disponibile: 1
+  prezzo_unitario: 9.99
+  soglia_minima_magazzino: 1
+  data_inserimento: 2026-04-28 17:19:33
+  product_type: two
+  user: two
+  data_ultima_modifica: 2026-04-28 17:19:33
