@@ -1,31 +1,29 @@
 class Api::V1::AuthenticationController < ApplicationController
-  skip_before_action :authorized, only: [:login] 
+  skip_before_action :authorized
 
   def login
-    @user = User.find_by(username: params[:username])
+    user = User.find_by(username: params[:username])
 
-    if @user && @user.active? && @user.authenticate(params[:password])
-      token = encode_token({ user_id: @user.id })
-      @user.record_login_attempt(true)
-      
-      AccessLog.create(user: @user, data_accesso: Time.current, esito: 'Successo', indirizzo_ip: request.remote_ip)
-      
-      render json: { user: @user, token: token }, status: :ok
-    else
+    if user&.authenticate(params[:password])
+      if user.active?
+        user.record_login_attempt(true)
 
-      if @user
-        @user.record_login_attempt(false)
-        AccessLog.create(user: @user, data_accesso: Time.current, esito: 'Fallito', indirizzo_ip: request.remote_ip)
+        # --- REGISTRAZIONE LOG DI ACCESSO ---
+        AccessLog.create!(
+          user: user,
+          indirizzo_ip: request.remote_ip,
+          user_agent: request.user_agent,
+          data_accesso: Time.current
+        )
+
+        token = encode_token({ user_id: user.id })
+        render json: { user: user, jwt: token }, status: :accepted
+      else
+        render json: { error: "Account bloccato o disattivato." }, status: :unauthorized
       end
-      
-      render json: { error: 'Credenziali non valide o account bloccato' }, status: :unauthorized
+    else
+      user&.record_login_attempt(false)
+      render json: { error: "Credenziali non valide" }, status: :unauthorized
     end
-  end
-
-  private
-
-  def encode_token(payload)
-    payload[:exp] = 24.hours.from_now.to_i
-    JWT.encode(payload, Rails.application.secret_key_base)
   end
 end

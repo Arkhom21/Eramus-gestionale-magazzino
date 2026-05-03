@@ -1,26 +1,25 @@
 class Api::V1::PasswordResetsController < ApplicationController
   skip_before_action :authorized
 
-  # Richiesta di reset
   def create
     user = User.find_by(email: params[:email])
     if user
       token = user.generate_password_reset_token!
-      # Nel progetto reale qui invieremmo l'email, per ora restituiamo il token
-      render json: { message: "Token generato con successo", reset_token: token }, status: :ok
+      # Simulazione invio email come richiesto dal punto 4.1
+      render json: { message: "Istruzioni inviate via email", reset_token: token }, status: :ok
     else
-      render json: { error: "Email non trovata" }, status: :not_found
+      render json: { message: "Istruzioni inviate via email" }, status: :ok # Sicurezza: non riveliamo se l'email esiste
     end
   end
 
-  # 2. Cambio password effettivo (L'utente usa il token ricevuto)
   def update
-    reset_record = PasswordReset.find_by(token: params[:token], stato: "attivo")
+    # Chiediamo al modello di trovare un record valido
+    reset_record = PasswordReset.valido(params[:token]).first
 
-    if reset_record && reset_record.data_scadenza > Time.current
+    if reset_record
       user = reset_record.user
       if user.update(password: params[:password])
-        reset_record.update(stato: "usato") # Disabilitiamo il token usato
+        reset_record.consuma!
         render json: { message: "Password aggiornata correttamente" }, status: :ok
       else
         render json: { error: user.errors.full_messages }, status: :unprocessable_entity

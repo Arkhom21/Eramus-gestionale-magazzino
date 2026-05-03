@@ -1,14 +1,15 @@
 class Api::V1::UsersController < ApplicationController
+  # Utilizziamo il metodo helper .admin? definito nel Model
   before_action :check_admin, only: [ :create, :update, :destroy ]
 
-  # Visualizzazione con Ricerca e Paginazione
+  # Visualizzazione con Ricerca e Paginazione (Punto 4.3)
   def index
-    users = User.all
-    users = users.where("username LIKE ? OR email LIKE ?", "%#{params[:q]}%", "%#{params[:q]}%") if params[:q].present?
+    # Usiamo lo scope .cerca definito nel Model
+    users = User.cerca(params[:q])
 
-    # Usiamo una paginazione semplice
     page = params[:page] || 1
     per_page = 10
+
     render json: users.offset((page.to_i - 1) * per_page).limit(per_page)
   end
 
@@ -18,18 +19,20 @@ class Api::V1::UsersController < ApplicationController
     user.stato_account = "Attivo"
 
     if user.save
-      # Qui chiameremo il Mailer per l'invio email di benvenuto (Punto 4.3)
-      # UserMailer.welcome_email(user).deliver_now
+      # Punto 4.3: Invio email di benvenuto
+      # UserMailer.welcome_email(user).deliver_later
       render json: user, status: :created
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
-  # Disattivazione utente (Soft Delete)
+  # Disattivazione utente (Soft Delete - Punto 4.3)
   def destroy
     user = User.find(params[:id])
-    if user.update(stato_account: "Disattivato")
+
+    # Usiamo il metodo .disattiva! definito nel Model
+    if user.disattiva!
       render json: { message: "Utente disattivato con successo" }
     else
       render json: { error: "Impossibile disattivare l'utente" }, status: :unprocessable_entity
@@ -43,8 +46,8 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def check_admin
-    # Verifichiamo il ruolo tramite l'associazione (Punto 5)
-    unless @user.role.nome_ruolo == "Admin"
+    # Usiamo il metodo .admin? del Model per maggiore chiarezza
+    unless @current_user&.admin?
       render json: { error: "Accesso negato: richiesti privilegi di Amministratore" }, status: :forbidden
     end
   end
