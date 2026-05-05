@@ -1,12 +1,13 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation'; // Import fondamentale per cambiare pagina
 
 export default function Home() {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
+  const router = useRouter(); // Inizializziamo il router
 
   // Validazione password direttive AGID
-  // Minimo 8 caratteri, almeno 1 maiuscola, 1 numero, 1 carattere speciale
   const validatePassword = (password) => {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return regex.test(password);
@@ -16,14 +17,38 @@ export default function Home() {
     e.preventDefault();
     setError('');
 
-    // Verifica conformità password secondo requisiti tecnici
     if (!validatePassword(credentials.password)) {
-      setError('La password deve avere almeno 8 caratteri, una maiuscola, un numero e un carattere speciale.');
+      setError('La password non rispetta i criteri AGID (min 8 caratteri, una maiuscola, un numero e un speciale).');
       return;
     }
 
-    console.log("Tentativo di login per:", credentials.username);
-    // Qui integreremo la chiamata al backend Rails per il JWT
+    try {
+      const response = await fetch('http://localhost:3000/api/v1/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: credentials.username,
+          password: credentials.password
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // 1. Salviamo i dati per le prossime chiamate
+        localStorage.setItem('token', data.jwt);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        console.log("Login effettuato con successo!");
+
+        // 2. REINDIRIZZAMENTO REALE
+        router.push('/dashboard'); 
+      } else {
+        setError(data.error || 'Credenziali non valide');
+      }
+    } catch (err) {
+      setError('Impossibile connettersi al server.');
+    }
   };
 
   return (
@@ -34,28 +59,24 @@ export default function Home() {
           <p className="text-muted text-center small mb-4">Accesso interfaccia amministrativa</p>
           
           <form onSubmit={handleSubmit}>
-            {/* Campo Username */}
             <div className="form-group mb-3">
-              <label className="active" htmlFor="username">Username</label>
               <input 
                 type="text" 
                 className="form-control" 
-                id="username" 
-                placeholder="Inserisci username"
+                id="username"
+                placeholder="Username"
                 value={credentials.username}
                 onChange={(e) => setCredentials({...credentials, username: e.target.value})}
                 required 
               />
             </div>
 
-            {/* Campo Password */}
             <div className="form-group mb-4">
-              <label className="active" htmlFor="password">Password</label>
               <input 
                 type="password" 
                 className="form-control" 
-                id="password" 
-                placeholder="********"
+                id="password"
+                placeholder="Password"
                 value={credentials.password}
                 onChange={(e) => setCredentials({...credentials, password: e.target.value})}
                 required 
