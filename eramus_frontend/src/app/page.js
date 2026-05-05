@@ -1,66 +1,83 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+import { useState } from 'react';
 
 export default function Home() {
+  const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [error, setError] = useState('');
+
+  // Validazione password direttive AGID
+  // Minimo 8 caratteri, almeno 1 maiuscola, 1 numero, 1 carattere speciale
+  const validatePassword = (password) => {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return regex.test(password);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    // Verifica conformità password
+    if (!validatePassword(credentials.password)) {
+      setError('La password deve avere almeno 8 caratteri, una maiuscola, un numero e un carattere speciale.');[cite: 1]
+      return;
+    }
+
+    console.log("Tentativo di login per:", credentials.username);
+    // Qui integreremo la chiamata al backend Rails per il JWT
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.js file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="container d-flex align-items-center justify-content-center vh-100">
+      <div className="card shadow-lg p-4" style={{ maxWidth: '450px', width: '100%' }}>
+        <div className="card-body">
+          <h2 className="text-center mb-4">Login ERAMUS</h2>[cite: 1]
+          <p className="text-muted text-center small mb-4">Accesso interfaccia amministrativa</p>[cite: 1]
+          
+          <form onSubmit={handleSubmit}>
+            {/* Campo Username[cite: 1] */}
+            <div className="form-group mb-3">
+              <label className="active" htmlFor="username">Username</label>
+              <input 
+                type="text" 
+                className="form-control" 
+                id="username" 
+                placeholder="Inserisci username"
+                value={credentials.username}
+                onChange={(e) => setCredentials({...credentials, username: e.target.value})}
+                required 
+              />
+            </div>
+
+            {/* Campo Password[cite: 1] */}
+            <div className="form-group mb-4">
+              <label className="active" htmlFor="password">Password</label>
+              <input 
+                type="password" 
+                className="form-control" 
+                id="password" 
+                placeholder="********"
+                value={credentials.password}
+                onChange={(e) => setCredentials({...credentials, password: e.target.value})}
+                required 
+              />
+            </div>
+
+            {error && (
+              <div className="alert alert-danger small mb-3" role="alert">
+                {error}
+              </div>
+            )}
+
+            <button type="submit" className="btn btn-primary w-100 py-2">
+              Accedi
+            </button>
+            
+            <div className="text-center mt-3">
+              <a href="#" className="small text-decoration-none">Recupera Password</a>[cite: 1]
+            </div>
+          </form>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }
