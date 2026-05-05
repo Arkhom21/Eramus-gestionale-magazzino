@@ -16,9 +16,9 @@ export default function Home() {
     e.preventDefault();
     setError('');
 
-    // Verifica conformità password
+    // Verifica conformità password secondo requisiti tecnici
     if (!validatePassword(credentials.password)) {
-      setError('La password deve avere almeno 8 caratteri, una maiuscola, un numero e un carattere speciale.');[cite: 1]
+      setError('La password deve avere almeno 8 caratteri, una maiuscola, un numero e un carattere speciale.');
       return;
     }
 
@@ -30,11 +30,11 @@ export default function Home() {
     <div className="container d-flex align-items-center justify-content-center vh-100">
       <div className="card shadow-lg p-4" style={{ maxWidth: '450px', width: '100%' }}>
         <div className="card-body">
-          <h2 className="text-center mb-4">Login ERAMUS</h2>[cite: 1]
-          <p className="text-muted text-center small mb-4">Accesso interfaccia amministrativa</p>[cite: 1]
+          <h2 className="text-center mb-4">Login ERAMUS</h2>
+          <p className="text-muted text-center small mb-4">Accesso interfaccia amministrativa</p>
           
           <form onSubmit={handleSubmit}>
-            {/* Campo Username[cite: 1] */}
+            {/* Campo Username */}
             <div className="form-group mb-3">
               <label className="active" htmlFor="username">Username</label>
               <input 
@@ -48,7 +48,7 @@ export default function Home() {
               />
             </div>
 
-            {/* Campo Password[cite: 1] */}
+            {/* Campo Password */}
             <div className="form-group mb-4">
               <label className="active" htmlFor="password">Password</label>
               <input 
@@ -73,7 +73,7 @@ export default function Home() {
             </button>
             
             <div className="text-center mt-3">
-              <a href="#" className="small text-decoration-none">Recupera Password</a>[cite: 1]
+              <a href="#" className="small text-decoration-none">Recupera Password</a>
             </div>
           </form>
         </div>

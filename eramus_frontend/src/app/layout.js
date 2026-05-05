@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata = {
   title: "ERAMUS - Gestionale",
-  description: "Progetto Web Avanzato - Eramus",[cite: 1]
+  description: "Progetto Web Avanzato - Eramus",
 };
 
 export default function RootLayout({ children }) {
