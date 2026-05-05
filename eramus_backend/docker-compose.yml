@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:15
+    container_name: eramus_db
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root # Corrisponde alla password nel tuo blocco 'default'
+      - POSTGRES_DB=eramus_backend_production
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: .
+    container_name: eramus_app
+    restart: always
+    ports:
+      - "3000:80" # Mappa la porta 80 di Thruster/Dockerfile alla 3000 del tuo PC
+    environment:
+      - RAILS_ENV=production
+      - RAILS_SERVE_STATIC_FILES=true
+      # DATABASE_URL sovrascrive le impostazioni di database.yml rendendo tutto più semplice
+      - DATABASE_URL=postgres://postgres:root@db:5432/eramus_backend_production
+      # Inserisci qui la tua master key o passala come variabile d'ambiente
+      - RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
