@@ -9,7 +9,7 @@ class User < ApplicationRecord
 
   MAX_LOGIN_ATTEMPTS = 5
 
-  # Validazioni di base
+  # Validazioni
   validates :username, presence: true, uniqueness: true
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
 
@@ -19,18 +19,14 @@ class User < ApplicationRecord
     message: "deve contenere almeno 8 caratteri, una maiuscola, un numero e un carattere speciale"
   }, if: -> { password.present? }
 
-  # --- SCOPES (Per pulire i Controller) ---
-
-  # Per la ricerca nel punto 4.3
+  # punto 4.3
   scope :cerca, ->(query) {
     where("username ILIKE :q OR email ILIKE :q", q: "%#{query}%") if query.present?
   }
 
-  # Per filtrare gli utenti nella gestione amministrativa[cite: 1]
+  # Per filtrare gli utenti nella gestione amministrativa
   scope :attivi, -> { where(stato_account: "Attivo") }
   scope :bloccati, -> { where(stato_account: "Bloccato") }
-
-  # --- LOGICA DI BUSINESS ---[cite: 1]
 
   def active?
     stato_account == "Attivo"
@@ -49,19 +45,19 @@ class User < ApplicationRecord
     end
   end
 
-  # Punto 4.1: Reset password[cite: 1]
+  # Punto 4.1: Reset password
   def generate_password_reset_token!
     token = SecureRandom.urlsafe_base64
     password_resets.create!( # Usa l'associazione
       token: token,
       data_richiesta: Time.current,
-      data_scadenza: 1.hour.from_now, # Requisito PDF: 1 ora[cite: 1]
+      data_scadenza: 1.hour.from_now, # Requisito PDF: 1 ora
       stato: "attivo"
     )
     token
   end
 
-  # Helper per il punto 4.3: Controllo Admin[cite: 1]
+  # Punto 4.3: Controllo Admin
   def admin?
     role&.nome_ruolo == "Admin"
   end

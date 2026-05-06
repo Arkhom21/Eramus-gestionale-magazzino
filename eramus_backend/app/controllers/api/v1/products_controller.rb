@@ -1,13 +1,15 @@
 class Api::V1::ProductsController < ApplicationController
+  before_action :authorized
   before_action :set_product, only: [ :show, :update, :destroy ]
 
   # GET /api/v1/products
-  def index
-    @products = Product.per_tipo(params[:type_id])
+def index
+  @products = Product.where(attivo: true) 
+                       .per_tipo(params[:type_id])
                        .cerca_nome(params[:q])
                        .ordina(params[:sort], params[:direction])
-    render json: @products
-  end
+  render json: @products
+end
 
   # GET /api/v1/products/:id
   def show
@@ -38,10 +40,11 @@ class Api::V1::ProductsController < ApplicationController
 
   # DELETE /api/v1/products/:id
   def destroy
-    # Punto 4.4: Eliminazione logica
-    # Se hai aggiunto la colonna 'attivo', usa: @product.update(attivo: false)
-    @product.destroy
-    head :no_content
+    if @product.update(attivo: false)
+      render json: { message: "Prodotto disattivato con successo" }, status: :ok
+    else
+      render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity
+    end
   end
 
   private

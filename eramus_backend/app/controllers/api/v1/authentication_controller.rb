@@ -11,9 +11,9 @@ class Api::V1::AuthenticationController < ApplicationController
         # registrazione
         AccessLog.create!(
           user: user,
-          ip_address: request.remote_ip, # Corretto da indirizzo_ip
-          data_ora: Time.current,        # Corretto da data_accesso
-          esito: "Successo"              # Aggiunto perché presente nello schema
+          ip_address: request.remote_ip, 
+          data_ora: Time.current,        
+          esito: "Successo"             
         )
 
         token = encode_token({ user_id: user.id })
