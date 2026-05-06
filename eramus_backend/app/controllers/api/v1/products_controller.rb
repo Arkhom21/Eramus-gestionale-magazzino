@@ -56,7 +56,7 @@ end
   def product_params
     params.require(:product).permit(
       :nome_oggetto, :descrizione, :quantita_disponibile,
-      :prezzo_unitario, :soglia_minima_magazzino, :product_type_id
+      :prezzo_unitario, :soglia_minima_magazzino, :product_type_id, :user_id
     )
   end
 end

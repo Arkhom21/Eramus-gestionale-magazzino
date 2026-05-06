@@ -39,7 +39,7 @@ puts "Creazione Utenti..."
 admin_user = User.create!(
   username: "admin",
   email: "admin@eramus.it",
-  password: "Password123!", # Rispetta i criteri AGID del Model
+  password: "Password123!", # Rispetta i criteri AGID 
   nome: "Mario",
   cognome: "Rossi",
   data_nascita: "1985-05-20",
@@ -88,6 +88,7 @@ p1 = Product.create!(
   prezzo_unitario: 85.50,
   soglia_minima_magazzino: 5,
   data_inserimento: Time.current,
+  attivo: true,
   product_type: tipo_toner,
   user: admin_user
 )
@@ -132,6 +133,6 @@ AccessLog.create!(
   data_accesso: Time.current
 )
 
-puts "--- SEEDS COMPLETATI CON SUCCESSO! ---"
+puts "--- SEEDS COMPLETATI ---"
 puts "Credenziali Admin: admin / Password123!"
 puts "Credenziali Operatore: operatore / Password123!"
