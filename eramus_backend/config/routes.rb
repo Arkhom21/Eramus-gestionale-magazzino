@@ -23,6 +23,7 @@ namespace :api do
       resources :users, only: [ :index, :create, :update, :destroy ]
       resources :products, only: [:index, :show, :create, :update, :destroy]
       resources :product_types, only: [:index]
+      resources :roles, only: [:index]
     end
   end
 end

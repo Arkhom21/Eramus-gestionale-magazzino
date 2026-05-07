@@ -8,7 +8,6 @@ class Api::V1::UsersController < ApplicationController
     page     = [params[:page].to_i, 1].max
     per_page = 10
     total    = users.count
-
     paginated = users.offset((page - 1) * per_page).limit(per_page)
 
     render json: {
@@ -38,7 +37,12 @@ class Api::V1::UsersController < ApplicationController
     user = User.find(params[:id])
 
     allowed = user_params
+
+    # Solo Admin può cambiare ruolo
     allowed = allowed.except(:role_id) unless @current_user.admin?
+
+    # Admin non può cambiare il proprio ruolo
+    allowed = allowed.except(:role_id) if user.id == @current_user.id
 
     if user.update(allowed)
       render json: user

@@ -16,9 +16,25 @@ export default function Dashboard() {
 
   // Gestione Utenti
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [userSearch, setUserSearch] = useState('');
   const [userPage, setUserPage] = useState(1);
   const [userMeta, setUserMeta] = useState(null);
+  const [showNewUserModal, setShowNewUserModal] = useState(false);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+
+  const initialUserForm = {
+    username: '',
+    email: '',
+    password: '',
+    nome: '',
+    cognome: '',
+    data_nascita: '',
+    role_id: ''
+  };
+  const [newUser, setNewUser] = useState(initialUserForm);
+  const [editUser, setEditUser] = useState(initialUserForm);
 
   const initialFormState = {
     nome_oggetto: '',
@@ -28,8 +44,10 @@ export default function Dashboard() {
     soglia_minima_magazzino: 1,
     product_type_id: ''
   };
-
   const [newProduct, setNewProduct] = useState(initialFormState);
+  const [showEditProductModal, setShowEditProductModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editProduct, setEditProduct] = useState(initialFormState);
 
   const refreshToken = async () => {
     const refresh = localStorage.getItem('refresh_token');
@@ -79,14 +97,12 @@ export default function Dashboard() {
       fetchProducts();
       fetchProductTypes();
       fetchDashboard();
+      if (admin) fetchRoles();
     }
   }, [router]);
 
-  // Carica utenti quando si passa alla tab gestione utenti
   useEffect(() => {
-    if (activeTab === 'utenti' && isAdmin) {
-      fetchUsers();
-    }
+    if (activeTab === 'utenti' && isAdmin) fetchUsers();
   }, [activeTab, userPage, userSearch]);
 
   const fetchDashboard = async () => {
@@ -98,18 +114,14 @@ export default function Dashboard() {
         setRecentMovements(data.recent_movements);
         setCategoriesChart(data.categories_chart);
       }
-    } catch (error) {
-      console.error("Errore dashboard:", error);
-    }
+    } catch (error) { console.error("Errore dashboard:", error); }
   };
 
   const fetchProducts = async () => {
     try {
       const res = await apiFetch('http://localhost:3000/api/v1/products');
       if (res?.ok) setProducts(await res.json());
-    } catch (error) {
-      console.error("Errore prodotti:", error);
-    }
+    } catch (error) { console.error("Errore prodotti:", error); }
   };
 
   const fetchProductTypes = async () => {
@@ -118,13 +130,21 @@ export default function Dashboard() {
       if (res?.ok) {
         const types = await res.json();
         setProductTypes(types);
-        if (types.length > 0) {
+        if (types.length > 0)
           setNewProduct(prev => ({ ...prev, product_type_id: types[0].id }));
-        }
       }
-    } catch (error) {
-      console.error("Errore tipi prodotto:", error);
-    }
+    } catch (error) { console.error("Errore tipi prodotto:", error); }
+  };
+
+  const fetchRoles = async () => {
+    try {
+      const res = await apiFetch('http://localhost:3000/api/v1/roles');
+      if (res?.ok) {
+        const data = await res.json();
+        setRoles(data);
+        setNewUser(prev => ({ ...prev, role_id: data[0]?.id || '' }));
+      }
+    } catch (error) { console.error("Errore ruoli:", error); }
   };
 
   const fetchUsers = async () => {
@@ -136,15 +156,70 @@ export default function Dashboard() {
         setUsers(data.users);
         setUserMeta({ total: data.total, total_pages: data.total_pages, page: data.page });
       }
-    } catch (error) {
-      console.error("Errore utenti:", error);
+    } catch (error) { console.error("Errore utenti:", error); }
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    const res = await apiFetch('http://localhost:3000/api/v1/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user: newUser })
+    });
+    if (res?.ok) {
+      setShowNewUserModal(false);
+      setNewUser({ ...initialUserForm, role_id: roles[0]?.id || '' });
+      fetchUsers();
+      fetchDashboard();
+      alert('Utente creato con successo! Email di benvenuto inviata.');
+    } else {
+      const data = await res.json();
+      alert('Errore: ' + data.errors.join(', '));
+    }
+  };
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    const res = await apiFetch(`http://localhost:3000/api/v1/users/${editingUser.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user: {
+          nome: editUser.nome,
+          cognome: editUser.cognome,
+          data_nascita: editUser.data_nascita,
+          role_id: editUser.role_id
+        }
+      })
+    });
+    if (res?.ok) {
+      setShowEditUserModal(false);
+      setEditingUser(null);
+      fetchUsers();
+    } else {
+      const data = await res.json();
+      alert('Errore: ' + data.errors.join(', '));
     }
   };
 
   const handleDeleteUser = async (id) => {
     if (!confirm('Disattivare questo utente?')) return;
     const res = await apiFetch(`http://localhost:3000/api/v1/users/${id}`, { method: 'DELETE' });
-    if (res?.ok) fetchUsers();
+    if (res?.ok) { fetchUsers(); fetchDashboard(); }
+  };
+
+  const openEditModal = (u) => {
+    setEditingUser(u);
+    setEditUser({
+      username: u.username,
+      email: u.email,
+      password: '',
+      nome: u.nome,
+      cognome: u.cognome,
+      data_nascita: u.data_nascita || '',
+      role_id: u.role_id
+    });
+    setShowEditUserModal(true);
   };
 
   const handleDelete = async (id) => {
@@ -153,17 +228,57 @@ export default function Dashboard() {
     if (res?.ok) { fetchProducts(); fetchDashboard(); }
   };
 
+  const openEditProductModal = (p) => {
+    setEditingProduct(p);
+    setEditProduct({
+      nome_oggetto: p.nome_oggetto,
+      descrizione: p.descrizione || '',
+      quantita_disponibile: p.quantita_disponibile,
+      prezzo_unitario: p.prezzo_unitario,
+      soglia_minima_magazzino: p.soglia_minima_magazzino,
+      product_type_id: p.product_type_id
+    });
+    setShowEditProductModal(true);
+  };
+
+  const handleUpdateProduct = async (e) => {
+    e.preventDefault();
+    const res = await apiFetch(`http://localhost:3000/api/v1/products/${editingProduct.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product: {
+          nome_oggetto: editProduct.nome_oggetto,
+          descrizione: editProduct.descrizione,
+          quantita_disponibile: parseInt(editProduct.quantita_disponibile) || 0,
+          prezzo_unitario: parseFloat(editProduct.prezzo_unitario) || 0,
+          soglia_minima_magazzino: parseInt(editProduct.soglia_minima_magazzino) || 1,
+          product_type_id: editProduct.product_type_id
+        }
+      })
+    });
+    if (res?.ok) {
+      setShowEditProductModal(false);
+      setEditingProduct(null);
+      fetchProducts();
+      fetchDashboard();
+    } else {
+      const data = await res.json();
+      alert('Errore: ' + data.errors.join(', '));
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     const currentUser = JSON.parse(localStorage.getItem('user'));
     const productData = {
-      nome_oggetto:            newProduct.nome_oggetto,
-      descrizione:             newProduct.descrizione,
-      quantita_disponibile:    parseInt(newProduct.quantita_disponibile) || 0,
-      prezzo_unitario:         parseFloat(newProduct.prezzo_unitario) || 0,
+      nome_oggetto: newProduct.nome_oggetto,
+      descrizione: newProduct.descrizione,
+      quantita_disponibile: parseInt(newProduct.quantita_disponibile) || 0,
+      prezzo_unitario: parseFloat(newProduct.prezzo_unitario) || 0,
       soglia_minima_magazzino: parseInt(newProduct.soglia_minima_magazzino) || 1,
-      product_type_id:         newProduct.product_type_id,
-      user_id:                 currentUser?.id
+      product_type_id: newProduct.product_type_id,
+      user_id: currentUser?.id
     };
     const res = await apiFetch('http://localhost:3000/api/v1/products', {
       method: 'POST',
@@ -204,12 +319,10 @@ export default function Dashboard() {
             </span>
           </p>
         </div>
-        <button className="btn btn-outline-secondary btn-sm" onClick={handleLogout}>
-          Logout
-        </button>
+        <button className="btn btn-outline-secondary btn-sm" onClick={handleLogout}>Logout</button>
       </div>
 
-      {/* STATS CARDS */}
+      {/* STATS */}
       {stats && (
         <div className="row g-3 mb-4">
           <div className="col-md-4">
@@ -255,7 +368,6 @@ export default function Dashboard() {
           <button className={`nav-link ${activeTab === 'categorie' ? 'active' : ''}`}
             onClick={() => setActiveTab('categorie')}>Categorie</button>
         </li>
-        {/* TAB UTENTI: visibile solo Admin */}
         {isAdmin && (
           <li className="nav-item">
             <button className={`nav-link ${activeTab === 'utenti' ? 'active' : ''}`}
@@ -302,7 +414,9 @@ export default function Dashboard() {
                         </span>
                       </td>
                       <td>€ {parseFloat(p.prezzo_unitario).toFixed(2)}</td>
-                      <td className="text-end pe-4">
+                      <td className="text-end pe-4 d-flex justify-content-end gap-2">
+                        <button className="btn btn-sm btn-outline-primary border-0"
+                          onClick={() => openEditProductModal(p)}>Modifica</button>
                         <button className="btn btn-sm btn-outline-danger border-0"
                           onClick={() => handleDelete(p.id)}>Elimina</button>
                       </td>
@@ -319,7 +433,7 @@ export default function Dashboard() {
         </>
       )}
 
-      {/* TAB: ULTIMI MOVIMENTI */}
+      {/* TAB: MOVIMENTI */}
       {activeTab === 'movimenti' && (
         <div className="card shadow-sm border-0">
           <div className="table-responsive">
@@ -380,17 +494,21 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* TAB: GESTIONE UTENTI (solo Admin) */}
+      {/* TAB: GESTIONE UTENTI */}
       {activeTab === 'utenti' && isAdmin && (
         <>
-          <div className="mb-3">
+          <div className="d-flex justify-content-between align-items-center mb-3">
             <input
               type="text"
-              className="form-control"
+              className="form-control w-50"
               placeholder="Cerca per username o email..."
               value={userSearch}
               onChange={e => { setUserSearch(e.target.value); setUserPage(1); }}
             />
+            <button className="btn btn-primary btn-sm"
+              onClick={() => setShowNewUserModal(true)}>
+              + Nuovo Utente
+            </button>
           </div>
           <div className="card shadow-sm border-0">
             <div className="table-responsive">
@@ -422,12 +540,14 @@ export default function Dashboard() {
                           {u.stato_account}
                         </span>
                       </td>
-                      <td className="text-end pe-4">
-                        <button
-                          className="btn btn-sm btn-outline-danger border-0"
+                      <td className="text-end pe-4 d-flex justify-content-end gap-2">
+                        <button className="btn btn-sm btn-outline-primary border-0"
+                          onClick={() => openEditModal(u)}>
+                          Modifica
+                        </button>
+                        <button className="btn btn-sm btn-outline-danger border-0"
                           onClick={() => handleDeleteUser(u.id)}
-                          disabled={u.id === user.id}
-                        >
+                          disabled={u.id === user.id}>
                           Disattiva
                         </button>
                       </td>
@@ -448,15 +568,144 @@ export default function Dashboard() {
               <button className="btn btn-sm btn-outline-secondary"
                 disabled={userPage === 1}
                 onClick={() => setUserPage(p => p - 1)}>← Precedente</button>
-              <span className="btn btn-sm disabled">
-                {userMeta.page} / {userMeta.total_pages}
-              </span>
+              <span className="btn btn-sm disabled">{userMeta.page} / {userMeta.total_pages}</span>
               <button className="btn btn-sm btn-outline-secondary"
                 disabled={userPage === userMeta.total_pages}
                 onClick={() => setUserPage(p => p + 1)}>Successivo →</button>
             </div>
           )}
         </>
+      )}
+
+      {/* MODAL NUOVO UTENTE */}
+      {showNewUserModal && (
+        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 shadow-lg">
+              <div className="modal-header bg-dark text-white">
+                <h5 className="modal-title">Nuovo Utente</h5>
+                <button type="button" className="btn-close btn-close-white"
+                  onClick={() => setShowNewUserModal(false)}></button>
+              </div>
+              <form onSubmit={handleCreateUser}>
+                <div className="modal-body p-4">
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Nome</label>
+                      <input type="text" className="form-control" required
+                        value={newUser.nome}
+                        onChange={e => setNewUser({ ...newUser, nome: e.target.value })} />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Cognome</label>
+                      <input type="text" className="form-control" required
+                        value={newUser.cognome}
+                        onChange={e => setNewUser({ ...newUser, cognome: e.target.value })} />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Username</label>
+                      <input type="text" className="form-control" required
+                        value={newUser.username}
+                        onChange={e => setNewUser({ ...newUser, username: e.target.value })} />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Email</label>
+                      <input type="email" className="form-control" required
+                        value={newUser.email}
+                        onChange={e => setNewUser({ ...newUser, email: e.target.value })} />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Password</label>
+                      <input type="password" className="form-control" required
+                        placeholder="Min 8 car., 1 maiusc., 1 numero, 1 speciale"
+                        value={newUser.password}
+                        onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Data di Nascita</label>
+                      <input type="date" className="form-control"
+                        value={newUser.data_nascita}
+                        onChange={e => setNewUser({ ...newUser, data_nascita: e.target.value })} />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label fw-semibold">Ruolo</label>
+                      <select className="form-select" required
+                        value={newUser.role_id}
+                        onChange={e => setNewUser({ ...newUser, role_id: e.target.value })}>
+                        {roles.map(r => (
+                          <option key={r.id} value={r.id}>{r.nome_ruolo}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer bg-light">
+                  <button type="button" className="btn btn-link text-secondary text-decoration-none"
+                    onClick={() => setShowNewUserModal(false)}>Annulla</button>
+                  <button type="submit" className="btn btn-success px-4 fw-bold">Crea Utente</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL MODIFICA UTENTE */}
+      {showEditUserModal && editingUser && (
+        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 shadow-lg">
+              <div className="modal-header bg-dark text-white">
+                <h5 className="modal-title">Modifica Utente — @{editingUser.username}</h5>
+                <button type="button" className="btn-close btn-close-white"
+                  onClick={() => setShowEditUserModal(false)}></button>
+              </div>
+              <form onSubmit={handleUpdateUser}>
+                <div className="modal-body p-4">
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Nome</label>
+                      <input type="text" className="form-control" required
+                        value={editUser.nome}
+                        onChange={e => setEditUser({ ...editUser, nome: e.target.value })} />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Cognome</label>
+                      <input type="text" className="form-control" required
+                        value={editUser.cognome}
+                        onChange={e => setEditUser({ ...editUser, cognome: e.target.value })} />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Data di Nascita</label>
+                      <input type="date" className="form-control"
+                        value={editUser.data_nascita}
+                        onChange={e => setEditUser({ ...editUser, data_nascita: e.target.value })} />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label fw-semibold">Ruolo</label>
+                      <select className="form-select"
+                        value={editUser.role_id}
+                        disabled={editingUser?.id === user.id}
+                        onChange={e => setEditUser({ ...editUser, role_id: e.target.value })}>
+                        {roles.map(r => (
+                          <option key={r.id} value={r.id}>{r.nome_ruolo}</option>
+                        ))}
+                      </select>
+                      {editingUser?.id === user.id && (
+                        <small className="text-muted">Non puoi modificare il tuo stesso ruolo.</small>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer bg-light">
+                  <button type="button" className="btn btn-link text-secondary text-decoration-none"
+                    onClick={() => setShowEditUserModal(false)}>Annulla</button>
+                  <button type="submit" className="btn btn-primary px-4 fw-bold">Salva Modifiche</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* MODAL AGGIUNGI PRODOTTO */}
@@ -466,7 +715,8 @@ export default function Dashboard() {
             <div className="modal-content border-0 shadow-lg">
               <div className="modal-header bg-dark text-white">
                 <h5 className="modal-title">Nuovo Prodotto</h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)}></button>
+                <button type="button" className="btn-close btn-close-white"
+                  onClick={() => setShowModal(false)}></button>
               </div>
               <form onSubmit={handleSave}>
                 <div className="modal-body p-4">
@@ -518,6 +768,71 @@ export default function Dashboard() {
                   <button type="button" className="btn btn-link text-secondary text-decoration-none"
                     onClick={() => setShowModal(false)}>Annulla</button>
                   <button type="submit" className="btn btn-success px-4 fw-bold">Salva Prodotto</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL MODIFICA PRODOTTO */}
+      {showEditProductModal && editingProduct && (
+        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 shadow-lg">
+              <div className="modal-header bg-dark text-white">
+                <h5 className="modal-title">Modifica Prodotto</h5>
+                <button type="button" className="btn-close btn-close-white"
+                  onClick={() => setShowEditProductModal(false)}></button>
+              </div>
+              <form onSubmit={handleUpdateProduct}>
+                <div className="modal-body p-4">
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">Nome Oggetto</label>
+                    <input type="text" className="form-control" required
+                      value={editProduct.nome_oggetto}
+                      onChange={e => setEditProduct({ ...editProduct, nome_oggetto: e.target.value })} />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">Tipo Prodotto</label>
+                    <select className="form-select" required
+                      value={editProduct.product_type_id}
+                      onChange={e => setEditProduct({ ...editProduct, product_type_id: e.target.value })}>
+                      {productTypes.map(t => (
+                        <option key={t.id} value={t.id}>{t.nome_tipo}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">Descrizione</label>
+                    <textarea className="form-control" rows="2"
+                      value={editProduct.descrizione}
+                      onChange={e => setEditProduct({ ...editProduct, descrizione: e.target.value })}></textarea>
+                  </div>
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Quantità</label>
+                      <input type="number" className="form-control" min="0" required
+                        value={editProduct.quantita_disponibile}
+                        onChange={e => setEditProduct({ ...editProduct, quantita_disponibile: e.target.value })} />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Prezzo Unitario (€)</label>
+                      <input type="number" step="0.01" className="form-control" min="0" required
+                        value={editProduct.prezzo_unitario}
+                        onChange={e => setEditProduct({ ...editProduct, prezzo_unitario: e.target.value })} />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="form-label fw-semibold text-danger">Soglia Minima Allerta</label>
+                    <input type="number" className="form-control" min="1"
+                      value={editProduct.soglia_minima_magazzino}
+                      onChange={e => setEditProduct({ ...editProduct, soglia_minima_magazzino: e.target.value })} />
+                  </div>
+                </div>
+                <div className="modal-footer bg-light">
+                  <button type="button" className="btn btn-link text-secondary text-decoration-none"
+                    onClick={() => setShowEditProductModal(false)}>Annulla</button>
+                  <button type="submit" className="btn btn-primary px-4 fw-bold">Salva Modifiche</button>
                 </div>
               </form>
             </div>
