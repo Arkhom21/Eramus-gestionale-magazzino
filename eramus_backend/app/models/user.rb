@@ -1,39 +1,48 @@
 class User < ApplicationRecord
   has_secure_password
 
+  def as_json(options = {})
+    super(options).except('password_digest')
+  end
+
+
   belongs_to :role
   has_many :access_logs
   has_many :products
   has_many :stock_movements
-  has_many :password_resets # Aggiungi questa associazione
+  has_many :password_resets
 
   MAX_LOGIN_ATTEMPTS = 5
 
   # Validazioni
   validates :username, presence: true, uniqueness: true
-  validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :email,    presence: true, uniqueness: true,
+                       format: { with: URI::MailTo::EMAIL_REGEXP }
 
-  # Punto 4.1: Password conforme AGID (min 8 caratteri, 1 maiuscola, 1 numero, 1 speciale)
+  # Password conforme AGID: min 8 caratteri, 1 maiuscola, 1 numero, 1 speciale
   validates :password, format: {
-    with: /\A(?=.*[A-Z])(?=.*\d)(?=.*[[:^alnum:]]).{8,}\z/,
-    message: "deve contenere almeno 8 caratteri, una maiuscola, un numero e un carattere speciale"
+    with:    /\A(?=.*[A-Z])(?=.*\d)(?=.*[[:^alnum:]]).{8,}\z/,
+    message: 'deve contenere almeno 8 caratteri, una maiuscola, un numero e un carattere speciale'
   }, if: -> { password.present? }
 
-  # punto 4.3
+  # ── Scopes ──────────────────────────────────────────────────────────────────
   scope :cerca, ->(query) {
     where("username ILIKE :q OR email ILIKE :q", q: "%#{query}%") if query.present?
   }
+  scope :attivi,   -> { where(stato_account: 'Attivo') }
+  scope :bloccati, -> { where(stato_account: 'Bloccato') }
 
-  # Per filtrare gli utenti nella gestione amministrativa
-  scope :attivi, -> { where(stato_account: "Attivo") }
-  scope :bloccati, -> { where(stato_account: "Bloccato") }
-
+  # ── Stato account ────────────────────────────────────────────────────────────
   def active?
-    stato_account == "Attivo"
+    stato_account&.downcase == 'attivo'
   end
 
   def lock!
-    update(stato_account: "Bloccato")
+    update(stato_account: 'Bloccato')
+  end
+
+  def disattiva!
+    update(stato_account: 'Inattivo')
   end
 
   def record_login_attempt(success)
@@ -45,20 +54,20 @@ class User < ApplicationRecord
     end
   end
 
-  # Punto 4.1: Reset password
+  # ── Password reset ───────────────────────────────────────────────────────────
   def generate_password_reset_token!
     token = SecureRandom.urlsafe_base64
-    password_resets.create!( # Usa l'associazione
-      token: token,
-      data_richiesta: Time.current,
-      data_scadenza: 1.hour.from_now, # Requisito PDF: 1 ora
-      stato: "attivo"
+    password_resets.create!(
+      token:            token,
+      data_generazione: Time.current,
+      data_scadenza:    1.hour.from_now,
+      stato:            'attivo'
     )
     token
   end
 
-  # Punto 4.3: Controllo Admin
+  # ── Ruolo ────────────────────────────────────────────────────────────────────
   def admin?
-    role&.nome_ruolo == "Admin"
+    role&.nome_ruolo == 'Admin'
   end
 end

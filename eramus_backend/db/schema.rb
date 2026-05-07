@@ -45,10 +45,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_06_144807) do
   end
 
   create_table "product_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.text "corpo_messaggio"
+    t.string "nome_tipo", null: false
+    t.text "descrizione"
     t.datetime "created_at", null: false
-    t.datetime "data_invio"
-    t.string "esito_invio"
     t.datetime "updated_at", null: false
   end
 

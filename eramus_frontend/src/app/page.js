@@ -36,13 +36,14 @@ export default function Home() {
 
       if (response.ok) {
         // 1. Salviamo i dati per le prossime chiamate
-        localStorage.setItem('token', data.jwt);
+        localStorage.setItem('token', data.access_token);
+        localStorage.setItem('refresh_token', data.refresh_token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        
+
         console.log("Login effettuato con successo!");
 
         // 2. REINDIRIZZAMENTO REALE
-        router.push('/dashboard'); 
+        router.push('/dashboard');
       } else {
         setError(data.error || 'Credenziali non valide');
       }
@@ -57,29 +58,29 @@ export default function Home() {
         <div className="card-body">
           <h2 className="text-center mb-4">Login ERAMUS</h2>
           <p className="text-muted text-center small mb-4">Accesso interfaccia amministrativa</p>
-          
+
           <form onSubmit={handleSubmit}>
             <div className="form-group mb-3">
-              <input 
-                type="text" 
-                className="form-control" 
+              <input
+                type="text"
+                className="form-control"
                 id="username"
                 placeholder="Username"
                 value={credentials.username}
-                onChange={(e) => setCredentials({...credentials, username: e.target.value})}
-                required 
+                onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
+                required
               />
             </div>
 
             <div className="form-group mb-4">
-              <input 
-                type="password" 
-                className="form-control" 
+              <input
+                type="password"
+                className="form-control"
                 id="password"
                 placeholder="Password"
                 value={credentials.password}
-                onChange={(e) => setCredentials({...credentials, password: e.target.value})}
-                required 
+                onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                required
               />
             </div>
 
@@ -92,9 +93,9 @@ export default function Home() {
             <button type="submit" className="btn btn-primary w-100 py-2">
               Accedi
             </button>
-            
+
             <div className="text-center mt-3">
-              <a href="#" className="small text-decoration-none">Recupera Password</a>
+              <a href="/recupera-password" className="small text-decoration-none">Recupera Password</a>
             </div>
           </form>
         </div>

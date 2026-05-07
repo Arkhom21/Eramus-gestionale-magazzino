@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h2 style="color: #333;">Benvenuto in ERAMUS, <%= @user.nome %>!</h2>
+    <p>Il tuo account è stato creato con successo.</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Username</td>
+        <td style="padding: 8px; border: 1px solid #ddd;"><%= @user.username %></td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Email</td>
+        <td style="padding: 8px; border: 1px solid #ddd;"><%= @user.email %></td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Ruolo</td>
+        <td style="padding: 8px; border: 1px solid #ddd;"><%= @user.role&.nome_ruolo %></td>
+      </tr>
+    </table>
+    <p style="color: #666; font-size: 14px;">
+      Accedi al pannello su 
+      <a href="http://localhost:3001">http://localhost:3001</a>
+    </p>
+    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+    <p style="color: #999; font-size: 12px;">ERAMUS SRL — Sistema Gestionale</p>
+  </body>
+</html>
