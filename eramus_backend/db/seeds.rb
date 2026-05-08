@@ -19,6 +19,7 @@ StockMovement.destroy_all
 Product.destroy_all
 ProductType.destroy_all
 AccessLog.destroy_all
+PasswordReset.destroy_all
 User.destroy_all
 Role.destroy_all
 

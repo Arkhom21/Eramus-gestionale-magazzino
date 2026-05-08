@@ -16,7 +16,25 @@ class Product < ApplicationRecord
     order("#{campo_valido} #{direzione_valida}")
   }
 
+  after_update :check_soglia_after_update
+
   def sotto_soglia?
     quantita_disponibile <= soglia_minima_magazzino
+  end
+
+  private
+
+  def check_soglia_after_update
+    if saved_change_to_quantita_disponibile? && sotto_soglia?
+      puts "ATTENZIONE: #{nome_oggetto} sotto soglia dopo modifica!"
+      admins = User.joins(:role).where(roles: { nome_ruolo: 'Admin' })
+      admins.each do |admin|
+        begin
+          UserMailer.threshold_notification(self, admin).deliver_later
+        rescue => e
+          puts "Errore invio email notifica soglia: #{e.message}"
+        end
+      end
+    end
   end
 end

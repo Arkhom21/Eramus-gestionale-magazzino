@@ -21,8 +21,14 @@ class StockMovement < ApplicationRecord
   def check_soglia_critica
     if product.sotto_soglia?
       puts "ATTENZIONE: #{product.nome_oggetto} sotto soglia!"
-      # UserMailer.threshold_notification(product).deliver_later
+      admins = User.joins(:role).where(roles: { nome_ruolo: 'Admin' })
+      admins.each do |admin|
+        begin
+          UserMailer.threshold_notification(product, admin).deliver_later
+        rescue => e
+          puts "Errore invio email notifica soglia: #{e.message}"
+        end
+      end
     end
   end
 end
-
