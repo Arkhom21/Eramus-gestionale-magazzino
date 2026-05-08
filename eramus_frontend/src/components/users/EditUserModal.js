@@ -33,9 +33,9 @@ export default function EditUserModal({ show, onClose, onSave, roles, user, curr
     <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content border-0 shadow-lg">
-          <div className="modal-header bg-dark text-white">
-            <h5 className="modal-title">Modifica Utente — @{user.username}</h5>
-            <button type="button" className="btn-close btn-close-white" onClick={onClose}></button>
+          <div className="modal-header text-white position-relative py-3" style={{ backgroundColor: '#0d6efd' }}>
+            <h5 className="modal-title w-100 text-center">Modifica Utente — @{user.username}</h5>
+            <button type="button" className="btn-close btn-close-white position-absolute end-0 me-3" onClick={onClose}></button>
           </div>
           <form onSubmit={handleSubmit}>
             <div className="modal-body p-4">
