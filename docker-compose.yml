@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: eramus_backend_development
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./eramus_backend
+    command: bash -c "bundle exec rails db:create db:schema:load db:seed && bundle exec rails s -b 0.0.0.0"
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://postgres:password@db:5432/eramus_backend_development
+      RAILS_ENV: development
+    depends_on:
+      - db
+
+  frontend:
+    build: ./eramus_frontend
+    ports:
+      - "3001:3001"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
