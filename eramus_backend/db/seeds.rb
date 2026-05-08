@@ -57,53 +57,47 @@ operatore_user = User.create!(
 )
 
 puts "Creazione Tipi Prodotto..."
-tipo_toner = ProductType.create!(nome_tipo: 'Toner', descrizione: 'Cartucce e toner per stampanti')
-tipo_carta = ProductType.create!(nome_tipo: 'Carta', descrizione: 'Risme e carta da stampa')
-tipo_buste = ProductType.create!(nome_tipo: 'Buste', descrizione: 'Buste e materiale postale')
+tipo_toner = ProductType.create!(nome_tipo: 'Toner',  descrizione: 'Cartucce e toner per stampanti')
+tipo_carta = ProductType.create!(nome_tipo: 'Carta',  descrizione: 'Risme e carta da stampa')
+tipo_buste = ProductType.create!(nome_tipo: 'Buste',  descrizione: 'Buste e materiale postale')
 
-puts "Creazione Prodotti..."
-p1 = Product.create!(
-  nome_oggetto:            'Toner HP Laserjet 500',
-  descrizione:             'Toner nero alta resa per ufficio tecnico',
-  quantita_disponibile:    0,  
-  prezzo_unitario:         85.50,
-  soglia_minima_magazzino: 5,
-  data_inserimento:        Time.current,
-  attivo:                  true,
-  product_type:            tipo_toner,
-  user:                    admin_user
-)
+puts "Creazione Prodotti e Movimenti..."
 
-p2 = Product.create!(
-  nome_oggetto:            'Risme Carta A4 80g',
-  descrizione:             'Confezione da 5 risme per fotocopiatrice',
-  quantita_disponibile:    0,  
-  prezzo_unitario:         24.90,
-  soglia_minima_magazzino: 10,
-  data_inserimento:        Time.current,
-  attivo:                  true,
-  product_type:            tipo_carta,
-  user:                    admin_user
-)
+# Helper per creare prodotto + movimento iniziale correttamente
+def crea_prodotto(nome, descrizione, quantita, prezzo, soglia, tipo, utente)
+  p = Product.create!(
+    nome_oggetto:            nome,
+    descrizione:             descrizione,
+    quantita_disponibile:    0,  # parte da 0, ci pensa il movimento
+    prezzo_unitario:         prezzo,
+    soglia_minima_magazzino: soglia,
+    data_inserimento:        Time.current,
+    attivo:                  true,
+    product_type:            tipo,
+    user:                    utente
+  )
+  StockMovement.create!(
+    product:        p,
+    user:           utente,
+    tipo_movimento: 'Carico',
+    quantita:       quantita,
+    data_movimento: Time.current,
+    note:           'Carico iniziale da seed'
+  )
+  p.reload
+end
 
-puts "Registrazione Movimenti Magazzino..."
-StockMovement.create!(
-  product:        p1,
-  user:           admin_user,
-  tipo_movimento: 'Carico',
-  quantita:       2,
-  data_movimento: Time.current,
-  note:           'Caricamento iniziale stock'
-)
+# Toner
+crea_prodotto('Toner HP Laserjet 500',   'Toner nero alta resa per ufficio tecnico', 2,  85.50, 5,  tipo_toner, admin_user)
+crea_prodotto('Toner Canon C3226i',      'Toner colore per stampante Canon',         8,  120.00, 3, tipo_toner, admin_user)
 
-StockMovement.create!(
-  product:        p2,
-  user:           operatore_user,
-  tipo_movimento: 'Carico',
-  quantita:       20,
-  data_movimento: Time.current,
-  note:           'Arrivo fornitura mensile'
-)
+# Carta
+crea_prodotto('Risme Carta A4 80g',      'Confezione da 5 risme per fotocopiatrice', 20, 24.90, 10, tipo_carta, admin_user)
+crea_prodotto('Carta Fotografica A4',    'Carta lucida per stampe fotografiche',     15, 18.50, 5,  tipo_carta, operatore_user)
+
+# Buste
+crea_prodotto('Buste C4 bianche',        'Buste formato C4 per documenti A4',        50, 12.00, 20, tipo_buste, operatore_user)
+crea_prodotto('Buste da lettera C5',     'Buste formato C5 con finestra',            30, 8.50,  15, tipo_buste, operatore_user)
 
 puts "Creazione Access Logs..."
 AccessLog.create!(
@@ -112,7 +106,15 @@ AccessLog.create!(
   data_ora:   Time.current,
   esito:      'Successo'
 )
+AccessLog.create!(
+  user:       operatore_user,
+  ip_address: '127.0.0.1',
+  data_ora:   Time.current,
+  esito:      'Successo'
+)
 
 puts "--- SEEDS COMPLETATI ---"
 puts "Credenziali Admin:     admin / Password123!"
 puts "Credenziali Operatore: operatore / Password123!"
+puts "Prodotti creati: #{Product.count}"
+puts "Movimenti creati: #{StockMovement.count}"

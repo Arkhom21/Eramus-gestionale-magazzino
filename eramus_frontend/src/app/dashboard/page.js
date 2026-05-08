@@ -230,6 +230,14 @@ export default function Dashboard() {
     if (res?.ok) { fetchUsers(); fetchDashboard(); }
   };
 
+  const handleReactivateUser = async (id) => {
+    if (!confirm('Riattivare questo utente?')) return;
+    const res = await apiFetch(`http://localhost:3000/api/v1/users/${id}/reactivate`, {
+      method: 'PATCH'
+    });
+    if (res?.ok) { fetchUsers(); fetchDashboard(); }
+  };
+
   const handleEditUser = (u) => {
     setEditingUser(u);
     setShowEditUser(true);
@@ -414,6 +422,7 @@ export default function Dashboard() {
             currentUser={user}
             onEdit={handleEditUser}
             onDelete={handleDeleteUser}
+            onReactivate={handleReactivateUser}
             userMeta={userMeta}
             userPage={userPage}
             setUserPage={setUserPage}

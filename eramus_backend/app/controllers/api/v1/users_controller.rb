@@ -1,5 +1,5 @@
 class Api::V1::UsersController < ApplicationController
-  before_action :check_admin, only: [:create, :update, :destroy]
+  before_action :check_admin, only: [:create, :update, :destroy, :reactivate]
 
   # GET /api/v1/users
   def index
@@ -59,6 +59,16 @@ class Api::V1::UsersController < ApplicationController
       render json: { message: 'Utente disattivato con successo' }
     else
       render json: { error: "Impossibile disattivare l'utente" }, status: :unprocessable_entity
+    end
+  end
+
+    # PATCH /api/v1/users/:id/reactivate
+  def reactivate
+    user = User.find(params[:id])
+    if user.update(stato_account: 'Attivo', tentativi_login_falliti: 0)
+      render json: { message: 'Utente riattivato con successo' }
+    else
+      render json: { error: 'Impossibile riattivare l\'utente' }, status: :unprocessable_entity
     end
   end
 

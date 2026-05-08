@@ -1,6 +1,6 @@
 'use client';
 
-export default function UserTable({ users, currentUser, onEdit, onDelete, userMeta, userPage, setUserPage }) {
+export default function UserTable({ users, currentUser, onEdit, onDelete, onReactivate, userMeta, userPage, setUserPage }) {
   return (
     <>
       <div className="card shadow-sm border-0">
@@ -37,9 +37,14 @@ export default function UserTable({ users, currentUser, onEdit, onDelete, userMe
                     <div className="d-flex justify-content-end gap-2">
                       <button className="btn btn-sm btn-outline-primary border-0"
                         onClick={() => onEdit(u)}>Modifica</button>
-                      <button className="btn btn-sm btn-outline-danger border-0"
-                        onClick={() => onDelete(u.id)}
-                        disabled={u.id === currentUser?.id}>Disattiva</button>
+                      {u.stato_account === 'Attivo' ? (
+                        <button className="btn btn-sm btn-outline-danger border-0"
+                          onClick={() => onDelete(u.id)}
+                          disabled={u.id === currentUser?.id}>Disattiva</button>
+                      ) : (
+                        <button className="btn btn-sm btn-outline-success border-0"
+                          onClick={() => onReactivate(u.id)}>Riattiva</button>
+                      )}
                     </div>
                   </td>
                 </tr>

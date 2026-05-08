@@ -8,23 +8,30 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
 
-namespace :api do
+  namespace :api do
     namespace :v1 do
-      # Rotte per l'Autenticazione
-      post "/login", to: "authentication#login"
+      # Autenticazione
+      post "/login",   to: "authentication#login"
       post "/refresh", to: "authentication#refresh"
-      
+
       # Recupero password
-      post "/password_reset", to: "password_resets#create"
+      post  "/password_reset", to: "password_resets#create"
       patch "/password_reset", to: "password_resets#update"
 
-      # Dashboard e Utenti
+      # Dashboard
       get "/dashboard", to: "dashboard#index"
-      resources :users, only: [ :index, :create, :update, :destroy ]
-      resources :products, only: [:index, :show, :create, :update, :destroy]
+
+      # Utenti
+      resources :users, only: [:index, :create, :update, :destroy] do
+        member do
+          patch :reactivate
+        end
+      end
+
+      # Prodotti
+      resources :products,      only: [:index, :show, :create, :update, :destroy]
       resources :product_types, only: [:index]
-      resources :roles, only: [:index]
+      resources :roles,         only: [:index]
     end
   end
 end
-
